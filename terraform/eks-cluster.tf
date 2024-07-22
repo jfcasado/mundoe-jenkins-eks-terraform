@@ -5,8 +5,8 @@ module "eks" {
   cluster_version = "1.24"
   
   #Cluster Networks
-  vpc_id          = module.vpc.vpc_id
-  subnet_ids     = module.vpc.private_subnets
+  vpc_id          = module.mundose-vpc.vpc_id
+  subnet_ids     = module.mundose-vpc.private_subnets
 
   tags = {
     Environment = "training"
