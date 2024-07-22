@@ -1,47 +1,28 @@
-variable "region" {
-  default     = "us-east-1"
-  description = "AWS region"
-}
+data "aws_availability_zones" "azs" {}
+module "myapp-vpc" {
+  source          = "terraform-aws-modules/vpc/aws"
+  version         = "3.19.0"
+  name            = "myapp-vpc"
+  cidr            = var.vpc_cidr_block
+  private_subnets = var.private_subnet_cidr_blocks
+  public_subnets  = var.public_subnet_cidr_blocks
+  azs             = data.aws_availability_zones.azs.names
 
-provider "aws" {
-  region = var.region
-}
-
-data "aws_availability_zones" "available" {}
-
-locals {
-  cluster_name = "mundose-eks-${random_string.suffix.result}"
-}
-
-resource "random_string" "suffix" {
-  length  = 8
-  special = false
-}
-
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "3.2.0"
-
-  name                 = "mundose-vpc"
-  cidr                 = "10.0.0.0/16"
-  azs                  = data.aws_availability_zones.available.names
-  private_subnets      = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  public_subnets       = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
   enable_nat_gateway   = true
   single_nat_gateway   = true
   enable_dns_hostnames = true
 
   tags = {
-    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
   }
 
   public_subnet_tags = {
-    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-    "kubernetes.io/role/elb"                      = "1"
+    "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+    "kubernetes.io/role/elb"                  = 1
   }
 
   private_subnet_tags = {
-    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-    "kubernetes.io/role/internal-elb"             = "1"
+    "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+    "kubernetes.io/role/internal-elb"         = 1
   }
 }
