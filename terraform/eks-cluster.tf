@@ -1,26 +1,52 @@
 module "eks" {
-    source  = "terraform-aws-modules/eks/aws"
-    version = "~> 19.0"
-    cluster_name = "myapp-eks-cluster"
-    cluster_version = "1.24"
+  source          = "terraform-aws-modules/eks/aws"
+  version         = "19.0"
+  cluster_name    = var.cluster_name
+  cluster_version = "1.24"
+  
+  #Cluster Networks
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids     = module.vpc.private_subnets
 
-    cluster_endpoint_public_access  = true
+  tags = {
+    Environment = "training"
+    GithubRepo  = "terraform-aws-eks"
+    GithubOrg   = "terraform-aws-modules"
+  }
 
-    vpc_id = module.myapp-vpc.vpc_id
-    subnet_ids = module.myapp-vpc.private_subnets
-
-    tags = {
-        environment = "development"
-        application = "myapp"
+  eks_managed_node_group_defaults = {
+    root_volume_type = "gp2"
+    instance_types = ["t2.small"]
+  }
+  eks_managed_node_groups = {
+    one = {
+      name                    = "worker-group-1"
+      instance_type           = "t2.small"
+      min_size = 1
+      max_size = 3      
+      desired_size            = 2
+      pre_bootstrap_user_data = <<-EOT
+      echo 'foo bar'
+      EOT
+       vpc_security_group_ids = [aws_security_group.worker_group_mgmt_one.id ]
     }
 
-    eks_managed_node_groups = {
-        dev = {
-            min_size = 1
-            max_size = 3
-            desired_size = 2
+    #two = {
+    #  name                    = "worker-group-2"
+    #  instance_type           = "t2.medium"
+    #  desired_size            = 1
+    #  pre_bootstrap_user_data = <<-EOT
+    #  echo 'foo bar'
+    #  EOT
+    #   vpc_security_group_ids = [aws_security_group.worker_group_mgmt_two.id] ]
+    #}
+  }
+}
+  
+data "aws_eks_cluster" "cluster" {
+  name = module.eks.cluster_id
+}
 
-            instance_types = ["t2.small"]
-        }
-    }
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_id
 }
