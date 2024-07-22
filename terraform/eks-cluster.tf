@@ -1,12 +1,12 @@
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
-  version         = "19.0"
-  cluster_name    = var.cluster_name
-  cluster_version = "1.24"
+  version         = "18.26.6"
+  cluster_name    = local.cluster_name
+  cluster_version = "1.20"
   
   #Cluster Networks
-  vpc_id          = module.mundose-vpc.vpc_id
-  subnet_ids     = module.mundose-vpc.private_subnets
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids     = module.vpc.private_subnets
 
   tags = {
     Environment = "training"
